@@ -15,6 +15,9 @@ fourth = 2;
 thirdFourth = 12; %last two digits
 c = 0.03; %chord length
 
+aoa = 45 * pi/180; %angle of attack of the airfoil
+R = [cos(aoa) -sin(aoa); sin(aoa) cos(aoa)];
+
 t = thirdFourth/100.0; %max thickness of the airfoil as a fraction of the chord
 m = first/100.0; %maximum camber
 p = second/10.0; %location of the maximum camber
@@ -22,7 +25,7 @@ p = second/10.0; %location of the maximum camber
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %WRITE .VERTEX FILE
-vertex_fid = fopen(['naca2D_' num2str(N) '.vertex'], 'w');
+vertex_fid = fopen(['naca2D_' num2str(512) '.vertex'], 'w');
 
 numberNodes = (2*(ceil(c/ds)));
 
@@ -31,14 +34,13 @@ fprintf(vertex_fid, '%d\n', numberNodes - 2);
 hold on
 %remaining lines are the initial coordinates of each vertex
 
-initialX = 0.03;
+initialX = 0;
 
 %WRITE VERTICES FOR UPPER SURFACE
 for i = 0:(c/ds)
     %determine x and y coordinates of point along lower surface
     
     in = i*ds; %position along the x axis
-    
     
     %HALF THICKNESS OF AIRFOIL AT GIVEN POSITION ON CHORD
     yT = 5*t*c*((0.2969*sqrt(in/c))+(-0.1260*(in/c))+(-0.3516*(in/c)^2)+(0.2843*(in/c)^3)+(-0.1036*(in/c)^4));
@@ -64,8 +66,15 @@ for i = 0:(c/ds)
     X(1) = initialX + in - yT*sin(theta); %x coordinates of upper surface
     X(2) = yC + yT*cos(theta); %y coordinates of upper surface
     
+    centerPoint(1) = c/2;
+    centerPoint(2) = 0;
+    
+    X = X-centerPoint;
+    X = X*R;
+    
     %plot this point
     plot(X(1),X(2),'*r')
+    
     axis([-0.05,0.15,-.05,.05]);
     
     %write the coordinates to the vertex file
@@ -77,7 +86,7 @@ for i = 1:((c/ds)-1)
     %determine x and y coordinates of point along lower surface
     
     in = i*ds; %position along the x axis
-    
+        
     %HALF THICKNESS OF AIRFOIL AT GIVEN POSITION ON CHORD
     yT = 5*t*c*((0.2969*sqrt(in/c))+(-0.1260*(in/c))+(-0.3516*(in/c)^2)+(0.2843*(in/c)^3)+(-0.1036*(in/c)^4));
     
@@ -100,10 +109,17 @@ for i = 1:((c/ds)-1)
     
     %LOWER SURFACE OF AIRFOIL
     X(1) = initialX + in + yT*sin(theta); %x coordinates of lower surface
-    X(2) = yC-yT*cos(theta); %y coordinates of lower surface
+    X(2) = yC - yT*cos(theta); %y coordinates of lower surface
+    
+    centerPoint(1) = c/2;
+    centerPoint(2) = 0;
+    
+    X = X-centerPoint;
+    
+    X = X*R;
     
     %plot this point
-    plot(X(1),X(2), '.b')
+    plot(X(1),X(2), '*b')
     
     %write the coordinates to the vertex file
     fprintf(vertex_fid, '%1.16e %1.16e\n', X(1), X(2));
@@ -118,7 +134,7 @@ fclose(vertex_fid);
 
 targetForce = 1.0e-2;
 
-target_fid = fopen(['naca2D_' num2str(N) '.target'], 'w');
+target_fid = fopen(['naca2D_' num2str(512) '.target'], 'w');
 
 fprintf(target_fid, '%d\n', numberNodes - 2);
 
@@ -131,3 +147,5 @@ end
 fclose(target_fid);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
